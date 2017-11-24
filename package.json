@@ -1,0 +1,29 @@
+{
+  "name": "utxo-merkle-proof",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ProjectWyvern/utxo-merkle-proof.git"
+  },
+  "keywords": [
+    "wyvern",
+    "bitcoin",
+    "ethereum",
+    "cryptocurrency"
+  ],
+  "author": "Project Wyvern Developers",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ProjectWyvern/utxo-merkle-proof/issues"
+  },
+  "homepage": "https://github.com/ProjectWyvern/utxo-merkle-proof#readme",
+  "dependencies": {
+    "ethereumjs-util": "^5.1.2",
+    "merkle-tree-solidity": "^1.0.8"
+  }
+}
