@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/ProjectWyvern/utxo-merkle-proof#readme",
   "dependencies": {
-    "ethereumjs-util": "^5.1.2"
+    "bs58check": "^2.1.0",
+    "ethereumjs-util": "^5.1.2",
+    "web3": "1.0.0-beta.18"
   }
 }

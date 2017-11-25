@@ -1,12 +1,15 @@
 const { sha3, bufferToHex } = require('ethereumjs-util');
+const web3            = require('web3');
+const soliditySha3    = el => Buffer.from(web3.utils.soliditySha3.apply(undefined, el).slice(2), 'hex');
 
 class MerkleTree {
   constructor(elements) {
-    // Filter empty strings and hash elements
-    this.elements = elements.filter(el => el).map(el => sha3(el));
+    // Hash elements
+    this.elements = elements.map(soliditySha3);
 
     // Deduplicate elements
     this.elements = this.bufDedup(this.elements);
+
     // Sort elements
     this.elements.sort(Buffer.compare);
 
@@ -106,7 +109,7 @@ class MerkleTree {
   }
 
   bufIndexOf(el, arr) {
-    let hash;
+    let hash = el;
 
     // Convert element to 32 byte hash if it is not one already
     if (el.length !== 32 || !Buffer.isBuffer(el)) {
@@ -114,6 +117,7 @@ class MerkleTree {
     } else {
       hash = el;
     }
+    hash = el;
 
     for (let i = 0; i < arr.length; i++) {
       if (hash.equals(arr[i])) {
