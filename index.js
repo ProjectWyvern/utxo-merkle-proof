@@ -1,50 +1,146 @@
-const MerkleTree = require('merkle-tree-solidity');
-const { sha3 } = require('ethereumjs-util');
-const fs = require('fs');
+const { sha3, bufferToHex } = require('ethereumjs-util');
 
-const utxos = JSON.parse(fs.readFileSync('data/utxos.json'));
+class MerkleTree {
+  constructor(elements) {
+    // Filter empty strings and hash elements
+    this.elements = elements.filter(el => el).map(el => sha3(el));
 
-console.log('Total ' + utxos.length + ' UTXOs');
+    // Deduplicate elements
+    this.elements = this.bufDedup(this.elements);
+    // Sort elements
+    this.elements.sort(Buffer.compare);
 
-var total = 0;
-utxos.map(utxo => {
-  total += utxo.satoshis;
-});
+    // Create layers
+    this.layers = this.getLayers(this.elements);
+  }
 
-console.log('Total value: ' + total / 1e8);
+  toJSON() {
+    return JSON.stringify({
+      elements: this.elements.map(e => e.toString('hex'))
+    });
+  }
 
-var arr = [];
+  static fromJSON(obj) {
+    const tree = new MerkleTree([]);
+    tree.elements = obj.elements.map(e => new Buffer(e, 'hex'));
+    tree.layers   = tree.getLayers(tree.elements);
+    return tree;
+  }
 
-utxos.map(utxo => {
-  var str = utxo.txid + utxo.address + utxo.outputIndex + utxo.satoshis;
-  arr.push(str);
-});
+  getLayers(elements) {
+    if (elements.length == 0) {
+      return [[""]];
+    }
 
-console.log('Hashing elements...');
-const elements = arr.map(e => sha3(e, '256'));
-console.log('Hashed elements!');
+    const layers = [];
+    layers.push(elements);
 
-console.log('Generating Merkle tree...');
-const start = Date.now() / 1000;
-const merkleTree = new MerkleTree.default(elements);
-const end = Date.now() / 1000;
-console.log('Generated Merkle tree in ' + (end - start) + ' seconds!');
+    // Get next layer until we reach the root
+    while (layers[layers.length - 1].length > 1) {
+      layers.push(this.getNextLayer(layers[layers.length - 1]));
+    }
 
-const root = merkleTree.getRoot();
-console.log('Merkle root (hex): ' + root.toString('hex'));
+    return layers;
+  }
 
-console.log('Testing proofs for 20 random elements...');
+  getNextLayer(elements) {
+    return elements.reduce((layer, el, idx, arr) => {
+      if (idx % 2 === 0) {
+        // Hash the current element with its pair element
+        layer.push(this.combinedHash(el, arr[idx + 1]));
+      }
 
-var indices = [];
-for (var i = 0; i < 20; i++) {
-  indices.push(Math.floor(Math.random() * elements.length));
+      return layer;
+    }, []);
+  }
+
+  combinedHash(first, second) {
+    if (!first) { return second; }
+    if (!second) { return first; }
+
+    return sha3(this.sortAndConcat(first, second));
+  }
+
+  getRoot() {
+    return this.layers[this.layers.length - 1][0];
+  }
+
+  getHexRoot() {
+    return bufferToHex(this.getRoot());
+  }
+
+  getProof(el) {
+    let idx = this.bufIndexOf(el, this.elements);
+
+    if (idx === -1) {
+      throw new Error("Element does not exist in Merkle tree");
+    }
+
+    return this.layers.reduce((proof, layer) => {
+      const pairElement = this.getPairElement(idx, layer);
+
+      if (pairElement) {
+        proof.push(pairElement);
+      }
+
+      idx = Math.floor(idx / 2);
+
+      return proof;
+    }, []);
+  }
+
+  getHexProof(el) {
+    const proof = this.getProof(el);
+
+    return this.bufArrToHex(proof);
+  }
+
+  getPairElement(idx, layer) {
+    const pairIdx = idx % 2 === 0 ? idx + 1 : idx - 1;
+
+    if (pairIdx < layer.length) {
+      return layer[pairIdx];
+    } else {
+      return null;
+    }
+  }
+
+  bufIndexOf(el, arr) {
+    let hash;
+
+    // Convert element to 32 byte hash if it is not one already
+    if (el.length !== 32 || !Buffer.isBuffer(el)) {
+      hash = sha3(el);
+    } else {
+      hash = el;
+    }
+
+    for (let i = 0; i < arr.length; i++) {
+      if (hash.equals(arr[i])) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  bufDedup(elements) {
+    return elements.filter((el, idx) => {
+      return this.bufIndexOf(el, elements) === idx;
+    });
+  }
+
+  bufArrToHex(arr) {
+    if (arr.some(el => !Buffer.isBuffer(el))) {
+      throw new Error("Array is not an array of buffers");
+    }
+
+    return "0x" + arr.map(el => el.toString("hex")).join("");
+  }
+
+  sortAndConcat(...args) {
+    return Buffer.concat([...args].sort(Buffer.compare));
+  }
 }
 
-indices.map(index => {
-  const proof = merkleTree.getProof(elements[index]);
-  if (MerkleTree.checkProof(proof, root, elements[index])) {
-    console.log('Proof for index ' + index + ' OK.');
-  } else {
-    console.warn('Proof for index ' + index + ' failed!');
-  }
-});
+module.exports = MerkleTree;

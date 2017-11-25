@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/ProjectWyvern/utxo-merkle-proof#readme",
   "dependencies": {
-    "ethereumjs-util": "^5.1.2",
-    "merkle-tree-solidity": "^1.0.8"
+    "ethereumjs-util": "^5.1.2"
   }
 }

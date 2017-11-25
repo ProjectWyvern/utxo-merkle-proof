@@ -23,7 +23,7 @@ yarn
 Then generate the Merkle tree:
 
 ```bash
-node index.js
+node generate.js
 ```
 
 Once you've done so, you can check the [WYV token contract]() and verify that the stored UTXO set Merkle root matches your calculated value.
