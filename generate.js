@@ -16,7 +16,7 @@ console.log('Total value: ' + total / 1e8);
 var arr = [];
 
 utxos.map(utxo => {
-  const rawAddr = bs58check.decode(utxo.address).slice(0, 20).toString('hex');
+  const rawAddr = bs58check.decode(utxo.address).slice(1, 21).toString('hex');
   arr.push([
     {type: 'bytes32', value: utxo.txid},
     {type: 'bytes20', value: rawAddr},
