@@ -26,4 +26,4 @@ Then generate the Merkle tree:
 node generate.js
 ```
 
-Once you've done so, you can check the [WYV token contract]() and verify that the stored UTXO set Merkle root matches your calculated value.
+Once you've done so, you can check the [WYV token contract](https://etherscan.io/address/wyverntoken.eth) and verify that the stored UTXO set Merkle root matches your calculated value.
